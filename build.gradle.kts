@@ -5,8 +5,8 @@ plugins {
 }
 
 allprojects {
-    group = "com.matthewjones372"
-    version = "1.0.0"
+    group = "io.github.matthewjones372"
+    version = "1.0.1"
 
     repositories {
         mavenCentral()
@@ -52,22 +52,22 @@ subprojects {
         repositories {
             maven {
                 name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "matthewjones372/golden-testing"}")
+                url = uri("https://maven.pkg.github.com/matthewjones372/kotlin-golden-testing")
                 credentials {
-                    username = System.getenv("GITHUB_ACTOR")
-                    password = System.getenv("GITHUB_TOKEN")
+                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
                 }
             }
         }
 
         publications {
-            create<MavenPublication>("maven") {
+            create<MavenPublication>("gpr") {
                 from(components["java"])
 
                 pom {
                     name.set(project.name)
                     description.set("Kotlin golden testing library for ${project.name}")
-                    url.set("https://github.com/matthewjones372/golden-testing")
+                    url.set("https://github.com/matthewjones372/kotlin-golden-testing")
 
                     licenses {
                         license {
@@ -84,9 +84,9 @@ subprojects {
                     }
 
                     scm {
-                        connection.set("scm:git:git://github.com/matthewjones372/golden-testing.git")
-                        developerConnection.set("scm:git:ssh://github.com/matthewjones372/golden-testing.git")
-                        url.set("https://github.com/matthewjones372/golden-testing")
+                        connection.set("scm:git:git://github.com/matthewjones372/kotlin-golden-testing.git")
+                        developerConnection.set("scm:git:ssh://github.com/matthewjones372/kotlin-golden-testing.git")
+                        url.set("https://github.com/matthewjones372/kotlin-golden-testing")
                     }
                 }
             }

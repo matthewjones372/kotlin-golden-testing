@@ -48,16 +48,16 @@ Add to your `build.gradle.kts`:
 repositories {
     mavenCentral()
     maven {
-        url = uri("https://maven.pkg.github.com/matthewjones372/golden-testing")
+        url = uri("https://maven.pkg.github.com/matthewjones372/kotlin-golden-testing")
         credentials {
             username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gpr.token") as String? ?: System.getenv("GITHUB_TOKEN")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
         }
     }
 }
 
 dependencies {
-    testImplementation("com.matthewjones372:golden-jackson:1.0-SNAPSHOT")
+    testImplementation("io.github.matthewjones372:golden-jackson:1.0.1")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")  // For Kotest
 }
 
@@ -70,7 +70,7 @@ tasks.test {
 
 ```kotlin
 dependencies {
-    testImplementation("com.matthewjones372:golden-kotlinx-json:1.0-SNAPSHOT")
+    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.1")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
 }
 ```
@@ -402,6 +402,58 @@ A: Yes! The `golden-core` module provides format-agnostic file management. Creat
 | Backward compat | ❌ Not tested | ❌ Not tested | ✅ Tested (decoding law) |
 | Round-trip testing | ❌ Not tested | ❌ Not tested | ✅ Tested (round-trip law) |
 | Clear workflow | ⚠️ Manual | ⚠️ Auto-update | ✅ `_new`/`_changed` workflow |
+
+## Publishing
+
+### For Library Maintainers
+
+**Local Publishing:**
+
+1. Configure credentials in `~/.gradle/gradle.properties`:
+   ```properties
+   gpr.user=your-github-username
+   gpr.key=your-github-pat
+   ```
+   (Generate a Personal Access Token with `write:packages` scope at https://github.com/settings/tokens)
+
+2. Publish to GitHub Packages:
+   ```bash
+   ./gradlew publish
+   ```
+
+**Automated Publishing:**
+
+Push a tag with `v*` pattern to trigger automatic publishing to GitHub Packages:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+### Consuming the Library
+
+Add this repository and dependency to your `build.gradle.kts`:
+
+```kotlin
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/matthewjones372/kotlin-golden-testing")
+        credentials {
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    testImplementation("io.github.matthewjones372:golden-jackson:1.0.1")
+    // or
+    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.1")
+}
+```
+
+**Note:** GitHub Packages requires authentication even for public packages. Set up your credentials as shown above.
 
 ## License
 
