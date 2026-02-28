@@ -2,9 +2,6 @@ plugins {
     kotlin("jvm")
 }
 
-group = "io.github.matthewjones372"
-version = "1.0-SNAPSHOT"
-
 repositories {
     mavenCentral()
 }
