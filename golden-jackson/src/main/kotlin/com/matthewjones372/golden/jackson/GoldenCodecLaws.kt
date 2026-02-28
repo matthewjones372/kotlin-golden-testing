@@ -3,9 +3,11 @@ package com.matthewjones372.golden.jackson
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.flipkart.zjsonpatch.JsonDiff
 import com.matthewjones372.golden.core.GoldenFileManager
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import org.jline.utils.WCWidth
 
 /**
  * Core laws for golden codec testing with Jackson.
@@ -55,11 +57,17 @@ class GoldenCodecLaws<T>(
                 // Mismatch: create "_changed" file
                 changedGoldenFile.writeText(actualJson)
 
+                // Generate simple diff summary
+                val diffSummary = generateDiffSummary(expectedJson, actualJson)
+
                 throw AssertionError("""
                     Golden file mismatch: ${goldenFile.name}
 
                     The current encoding differs from the golden reference.
                     A changed reference file has been created: ${changedGoldenFile.name}
+
+                    Changes detected:
+                    $diffSummary
 
                     To accept this change as the new golden reference:
                       cp ${changedGoldenFile.path} ${goldenFile.path}
@@ -113,4 +121,72 @@ class GoldenCodecLaws<T>(
     private fun normalizeJson(json: String): String {
         return mapper.readTree(json).toString()
     }
+
+    /**
+     * Generates a human-readable summary of differences between two JSON documents.
+     */
+    private fun generateDiffSummary(expectedJson: String, actualJson: String): String {
+        val expectedTree = mapper.readTree(expectedJson)
+        val actualTree = mapper.readTree(actualJson)
+        val patch = JsonDiff.asJson(expectedTree, actualTree)
+
+        val added = mutableListOf<String>()
+        val removed = mutableListOf<String>()
+        val modified = mutableListOf<String>()
+
+        patch.forEach { operation ->
+            val op = operation.get("op")?.asText()
+            val path = operation.get("path")?.asText().orEmpty()
+            when (op) {
+                "add" -> added.add(path)
+                "remove" -> removed.add(path)
+                "replace" -> modified.add(path)
+            }
+        }
+
+        val entries = buildList<Pair<String, String>> {
+            if (added.isNotEmpty()) add(green("Added:") to "✨ ${added.joinToString(", ")}")
+            if (removed.isNotEmpty()) add(red("Removed:") to "🗑️  ${removed.joinToString(", ")}")
+            if (modified.isNotEmpty()) add(yellow("Modified:") to "✏️  ${modified.joinToString(", ")}")
+        }
+
+        if (entries.isEmpty()) {
+            // leading newline matters here too
+            return "\n${yellow("⚠️  (structural changes detected)")}"
+        }
+
+        val maxWidth = entries.maxOf { displayWidth(it.first) }
+
+        val body = buildString {
+            for ((label, value) in entries) {
+                val pad = " ".repeat((maxWidth - displayWidth(label)).coerceAtLeast(0) + 1)
+                appendLine("$label$pad$value")
+            }
+        }.trimEnd()
+
+        // IMPORTANT: leading newline so the runner indents all lines consistently
+        return "\n$body"
+    }
+
+    // ANSI is zero width; unicode width via wcwidth
+    private fun displayWidth(s: String): Int {
+        var w = 0
+        var i = 0
+        while (i < s.length) {
+            if (s[i] == '\u001B' && i + 1 < s.length && s[i + 1] == '[') {
+                i += 2
+                while (i < s.length && s[i] !in 'A'..'Z' && s[i] !in 'a'..'z') i++
+                if (i < s.length) i++
+                continue
+            }
+            val cp = Character.codePointAt(s, i)
+            w += WCWidth.wcwidth(cp).coerceAtLeast(0)
+            i += Character.charCount(cp)
+        }
+        return w
+    }
+
+    private fun green(text: String) = "\u001B[32m$text\u001B[0m"
+    private fun red(text: String) = "\u001B[31m$text\u001B[0m"
+    private fun yellow(text: String) = "\u001B[33m$text\u001B[0m"
 }

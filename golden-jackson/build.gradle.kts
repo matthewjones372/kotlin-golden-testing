@@ -15,6 +15,12 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")
 
+    // JSON Patch for diff output
+    implementation("com.flipkart.zjsonpatch:zjsonpatch:0.4.16")
+
+    // JLine for proper unicode width calculation
+    implementation("org.jline:jline:3.27.1")
+
     // Kotlin reflection
     implementation(kotlin("reflect"))
 
