@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    `java-library`
 }
 
 repositories {
@@ -10,9 +11,9 @@ dependencies {
     // Kotlin reflection
     implementation(kotlin("reflect"))
 
-    // Kotest - needed for property testing API
-    implementation("io.kotest:kotest-assertions-core:5.9.1")
-    implementation("io.kotest:kotest-property:5.9.1")
+    // Kotest - exposed to users for property testing API
+    api("io.kotest:kotest-assertions-core:5.9.1")
+    api("io.kotest:kotest-property:5.9.1")
 
     // Testing
     testImplementation(kotlin("test"))
