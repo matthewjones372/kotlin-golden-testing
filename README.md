@@ -47,17 +47,10 @@ Add to your `build.gradle.kts`:
 ```kotlin
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.github.com/matthewjones372/kotlin-golden-testing")
-        credentials {
-            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
-        }
-    }
 }
 
 dependencies {
-    testImplementation("io.github.matthewjones372:golden-jackson:1.0.1")
+    testImplementation("io.github.matthewjones372:golden-jackson:1.0.2")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")  // For Kotest
 }
 
@@ -70,7 +63,7 @@ tasks.test {
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.1")
+    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.2")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
 }
 ```
@@ -407,53 +400,56 @@ A: Yes! The `golden-core` module provides format-agnostic file management. Creat
 
 ### For Library Maintainers
 
+This project uses **automatic versioning** from git tags via the [axion-release-plugin](https://github.com/allegro/axion-release-plugin).
+
+**How Versioning Works:**
+- Version is automatically derived from the latest git tag
+- If current commit is tagged: release version (e.g., `1.0.2`)
+- If there are commits after the tag: SNAPSHOT version (e.g., `1.0.3-SNAPSHOT`)
+
+**Setup (One-Time):**
+
+1. Register at [Sonatype Central Portal](https://central.sonatype.com/)
+2. Verify namespace ownership: `io.github.matthewjones372` (linked to your GitHub account)
+3. Generate GPG key pair for signing:
+   ```bash
+   gpg --full-generate-key
+   gpg --list-secret-keys --keyid-format=long
+   gpg --armor --export-secret-keys YOUR_KEY_ID
+   ```
+4. Configure credentials in `~/.gradle/gradle.properties`:
+   ```properties
+   mavenCentralUsername=your-sonatype-username
+   mavenCentralPassword=your-sonatype-password
+   signingInMemoryKey=<your-gpg-private-key-ascii-armored>
+   signingInMemoryKeyPassword=your-gpg-passphrase
+   ```
+
 **Local Publishing:**
 
-1. Configure credentials in `~/.gradle/gradle.properties`:
-   ```properties
-   gpr.user=your-github-username
-   gpr.key=your-github-pat
-   ```
-   (Generate a Personal Access Token with `write:packages` scope at https://github.com/settings/tokens)
+```bash
+./gradlew publishAllPublicationsToMavenCentralRepository
+```
 
-2. Publish to GitHub Packages:
-   ```bash
-   ./gradlew publish
-   ```
+**Automated Publishing (Recommended):**
 
-**Automated Publishing:**
-
-Push a tag with `v*` pattern to trigger automatic publishing to GitHub Packages:
+Simply push a git tag with `v*` pattern to trigger automatic publishing to Maven Central:
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.3
+git push origin v1.0.3
 ```
 
-### Consuming the Library
+GitHub Actions will automatically:
+1. Detect the version from the tag (e.g., `v1.0.3` → version `1.0.3`)
+2. Build and sign all artifacts
+3. Publish to Maven Central
 
-Add this repository and dependency to your `build.gradle.kts`:
-
-```kotlin
-repositories {
-    mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.github.com/matthewjones372/kotlin-golden-testing")
-        credentials {
-            username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
-        }
-    }
-}
-
-dependencies {
-    testImplementation("io.github.matthewjones372:golden-jackson:1.0.1")
-    // or
-    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.1")
-}
-```
-
-**Note:** GitHub Packages requires authentication even for public packages. Set up your credentials as shown above.
+**Required GitHub Secrets:**
+- `MAVEN_CENTRAL_USERNAME`
+- `MAVEN_CENTRAL_PASSWORD`
+- `GPG_PRIVATE_KEY` (ASCII-armored)
+- `GPG_PASSPHRASE`
 
 ## License
 

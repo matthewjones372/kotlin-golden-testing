@@ -1,12 +1,21 @@
 plugins {
     kotlin("jvm") version "2.0.21" apply false
     kotlin("plugin.serialization") version "2.0.21" apply false
-    id("maven-publish")
+    id("pl.allegro.tech.build.axion-release") version "1.21.1"
+    id("com.vanniktech.maven.publish") version "0.30.0" apply false
+}
+
+val scmVer = scmVersion.version
+
+scmVersion {
+    tag {
+        prefix.set("v")
+    }
 }
 
 allprojects {
     group = "io.github.matthewjones372"
-    version = "1.0.2"
+    version = scmVer
 
     repositories {
         mavenCentral()
@@ -15,7 +24,7 @@ allprojects {
 
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "maven-publish")
+    apply(plugin = "com.vanniktech.maven.publish")
 
     tasks.withType<Test> {
         useJUnitPlatform()
@@ -48,47 +57,33 @@ subprojects {
         }))
     }
 
-    configure<PublishingExtension> {
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/matthewjones372/kotlin-golden-testing")
-                credentials {
-                    username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
-                    password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+    configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
+        publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
+        signAllPublications()
+
+        pom {
+            name.set(project.name)
+            description.set("Kotlin golden testing library for ${project.name}")
+            url.set("https://github.com/matthewjones372/kotlin-golden-testing")
+
+            licenses {
+                license {
+                    name.set("MIT License")
+                    url.set("https://opensource.org/licenses/MIT")
                 }
             }
-        }
 
-        publications {
-            create<MavenPublication>("gpr") {
-                from(components["java"])
-
-                pom {
-                    name.set(project.name)
-                    description.set("Kotlin golden testing library for ${project.name}")
-                    url.set("https://github.com/matthewjones372/kotlin-golden-testing")
-
-                    licenses {
-                        license {
-                            name.set("MIT License")
-                            url.set("https://opensource.org/licenses/MIT")
-                        }
-                    }
-
-                    developers {
-                        developer {
-                            id.set("matthewjones372")
-                            name.set("Matthew Jones")
-                        }
-                    }
-
-                    scm {
-                        connection.set("scm:git:git://github.com/matthewjones372/kotlin-golden-testing.git")
-                        developerConnection.set("scm:git:ssh://github.com/matthewjones372/kotlin-golden-testing.git")
-                        url.set("https://github.com/matthewjones372/kotlin-golden-testing")
-                    }
+            developers {
+                developer {
+                    id.set("matthewjones372")
+                    name.set("Matthew Jones")
                 }
+            }
+
+            scm {
+                connection.set("scm:git:git://github.com/matthewjones372/kotlin-golden-testing.git")
+                developerConnection.set("scm:git:ssh://github.com/matthewjones372/kotlin-golden-testing.git")
+                url.set("https://github.com/matthewjones372/kotlin-golden-testing")
             }
         }
     }
