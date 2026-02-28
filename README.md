@@ -8,7 +8,6 @@ A Kotlin library for **golden testing** and **property-based testing** of JSON s
 
 - **`golden-jackson`**: Jackson JSON serialization ✅
 - **`golden-kotlinx-json`**: kotlinx.serialization JSON format ✅
-- **`golden-avro`**: Avro binary format (coming soon) 🚧
 
 ## Two Testing Approaches
 
