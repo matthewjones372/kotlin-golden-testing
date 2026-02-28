@@ -1,5 +1,8 @@
 # Golden Testing for Kotlin
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/golden-core)](https://central.sonatype.com/artifact/io.github.matthewjones372/golden-core)
+[![GitHub release](https://img.shields.io/github/v/release/matthewjones372/kotlin-golden-testing)](https://github.com/matthewjones372/kotlin-golden-testing/releases)
+
 A Kotlin library for **golden testing** and **property-based testing** of JSON serialization formats, inspired by [zio-json-golden](https://github.com/zio/zio-json/tree/series/2.x/zio-json-golden). Supports Jackson and kotlinx.serialization with Kotest property-based testing.
 
 **Built with ❤️ using [Claude Code](https://claude.com/claude-code)**
@@ -50,7 +53,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation("io.github.matthewjones372:golden-jackson:1.0.2")
+    testImplementation("io.github.matthewjones372:golden-jackson:1.0.4")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")  // For Kotest
 }
 
@@ -63,7 +66,7 @@ tasks.test {
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.2")
+    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.4")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
 }
 ```
