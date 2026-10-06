@@ -328,7 +328,7 @@ and run:
 
 ## License
 
-MIT
+MIT. See [LICENSE](LICENSE).
 
 ## Credits
 
