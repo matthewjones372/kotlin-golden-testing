@@ -3,49 +3,35 @@
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/golden-core)](https://central.sonatype.com/artifact/io.github.matthewjones372/golden-core)
 [![GitHub release](https://img.shields.io/github/v/release/matthewjones372/kotlin-golden-testing)](https://github.com/matthewjones372/kotlin-golden-testing/releases)
 
-A Kotlin library for **golden testing** and **property-based testing** of JSON serialization formats, inspired by [zio-json-golden](https://github.com/zio/zio-json/tree/series/2.x/zio-json-golden). Supports Jackson and kotlinx.serialization with Kotest property-based testing.
+Golden testing and property-based testing for JSON codecs in Kotlin, based on [zio-json-golden](https://github.com/zio/zio-json/tree/series/2.x/zio-json-golden). It works with Jackson and kotlinx.serialization, and uses Kotest generators.
 
-**Built with ❤️ using [Claude Code](https://claude.com/claude-code)**
+## Modules
 
-## Supported Formats
+- `golden-jackson`: Jackson
+- `golden-kotlinx-json`: kotlinx.serialization JSON
+- `golden-core`: format-agnostic golden file handling, used by both
 
-- **`golden-jackson`**: Jackson JSON serialization ✅
-- **`golden-kotlinx-json`**: kotlinx.serialization JSON format ✅
+## Two kinds of test
 
-## Two Testing Approaches
+`goldenCodecTest` writes a handful of sample values (5 by default) to reference files and checks on each run that encoding and decoding still match them. Use it to catch serialization changes you didn't mean to make.
 
-This library provides two complementary testing approaches:
+`codecPropertyTest` writes no files. It round-trips many generated values (1000 by default) to check the codec is consistent with itself.
 
-### 1. Golden Testing (`goldenCodecTest`)
-- 🎯 **Purpose**: Regression detection and explicit change review
-- 📁 **Output**: Small number of reference files (5-10)
-- ✅ **Use for**: Detecting unintended serialization changes
+They cover different things, so it's worth using both.
 
-### 2. Property-Based Testing (`codecPropertyTest`)
-- 🎯 **Purpose**: Comprehensive codec correctness testing
-- 🔄 **Output**: No files, just extensive round-trip testing (1000+ iterations)
-- ✅ **Use for**: Ensuring codec works correctly across all edge cases
+## What golden testing is
 
-**Recommendation**: Use BOTH! Golden tests catch regressions, property tests prove correctness.
+Golden testing (also called snapshot or characterization testing) works like this:
 
-## What is Golden Testing?
+1. Generate reference files from your data types.
+2. On later runs, check that encoding and decoding still match those files.
+3. When you change a type on purpose, review the new output and accept it.
 
-Golden testing (also called snapshot testing or characterization testing) is a technique where you:
-1. Generate reference files (golden files) from your data structures
-2. On subsequent test runs, verify that the encoding/decoding still matches these reference files
-3. When you intentionally change your data structures, review and accept the changes explicitly
-
-**Why use golden testing?**
-- 🛡️ **Catch unintended changes**: Prevents accidental breaking of serialization compatibility
-- 📝 **Explicit change review**: Forces you to review and approve serialization changes
-- 🔄 **Backward compatibility**: Ensures old serialized data can still be decoded
-- 📊 **Test multiple variations**: Property-based testing generates diverse test cases automatically
+Because the reference files are committed, a change to the serialized format shows up in code review, and old data is checked to still decode.
 
 ## Installation
 
-### Jackson Module
-
-Add to your `build.gradle.kts`:
+### Jackson
 
 ```kotlin
 repositories {
@@ -53,8 +39,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation("io.github.matthewjones372:golden-jackson:1.0.4")
-    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")  // For Kotest
+    testImplementation("io.github.matthewjones372:golden-jackson:1.0.6")
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
 }
 
 tasks.test {
@@ -62,19 +48,18 @@ tasks.test {
 }
 ```
 
-### kotlinx.serialization JSON Module
+### kotlinx.serialization
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.4")
+    testImplementation("io.github.matthewjones372:golden-kotlinx-json:1.0.6")
     testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
 }
 ```
 
+## Examples
 
-## Quick Start
-
-### Jackson Example (Kotest)
+### Jackson with Kotest
 
 ```kotlin
 import com.matthewjones372.golden.jackson.*
@@ -121,9 +106,7 @@ class PersonGoldenTest : FunSpec({
 })
 ```
 
-### Jackson Example (JUnit 5)
-
-If you prefer JUnit 5 over Kotest:
+### Jackson with JUnit 5
 
 ```kotlin
 import com.matthewjones372.golden.jackson.*
@@ -167,13 +150,13 @@ class PersonGoldenTest {
 }
 ```
 
-**Note:** JUnit tests require `kotlinx-coroutines-test` for the `runTest` wrapper:
+JUnit tests need `kotlinx-coroutines-test` for `runTest`:
 
 ```kotlin
 testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 ```
 
-### kotlinx.serialization JSON Example
+### kotlinx.serialization
 
 ```kotlin
 import com.matthewjones372.golden.kotlinx.*
@@ -211,120 +194,7 @@ class PersonGoldenTest : FunSpec({
 })
 ```
 
-
-## Running Tests
-
-### First Run
-
-```bash
-./gradlew test
-```
-
-**Result:** Test fails with output like:
-```
-Golden file does not exist: Person_000.json
-
-A new reference file has been created: Person_000_new.json
-
-To accept this as the golden reference:
-  mv src/test/resources/golden/Person_000_new.json src/test/resources/golden/Person_000.json
-
-Then re-run the test.
-```
-
-### Accept the Golden Files
-
-```bash
-# Review the generated files
-cat src/test/resources/golden/Person_000_new.json
-
-# Accept them by renaming
-for f in src/test/resources/golden/*_new.json; do
-    mv "$f" "${f/_new.json/.json}"
-done
-```
-
-### Re-run the Test
-
-```bash
-./gradlew test
-```
-
-**Result:** ✅ Test passes!
-
-## The `_new` and `_changed` Workflow
-
-### Workflow 1: First Run (No Golden Files)
-
-1. **Test runs** and generates `_new` files:
-   - `Person_000_new.json`
-   - `Person_001_new.json`
-   - ... (up to `sampleCount`)
-
-2. **Test fails** with clear instructions
-
-3. **Review** the generated files
-
-4. **Accept** by renaming:
-   ```bash
-   mv src/test/resources/golden/Person_000_new.json src/test/resources/golden/Person_000.json
-   ```
-
-5. **Re-run** → ✅ Passes!
-
-### Workflow 2: Data Structure Changed
-
-When you modify your data class:
-
-```kotlin
-data class Person(
-    val name: String,
-    val age: Int,
-    val email: String,
-    val phoneNumber: String  // ← New field
-)
-```
-
-1. **Test runs** and generates `_changed` files
-
-2. **Test fails** with diff instructions
-
-3. **Review the diff**:
-   ```bash
-   diff src/test/resources/golden/Person_000.json src/test/resources/golden/Person_000_changed.json
-   ```
-
-4. **If change is intended**, accept it:
-   ```bash
-   cp src/test/resources/golden/Person_000_changed.json src/test/resources/golden/Person_000.json
-   ```
-
-5. **If unintended**, fix your code!
-
-## Configuration Options
-
-### `GoldenCodecTestConfig`
-
-```kotlin
-data class GoldenCodecTestConfig(
-    val sampleCount: Int = 5,              // Number of golden samples
-    val resourcePath: String = "golden",    // Directory under src/test/resources/
-    val testRoundTrip: Boolean = true,      // Test round-trip stability
-    val testEncoding: Boolean = true,       // Test encoding
-    val testDecoding: Boolean = true,       // Test decoding
-    val seed: Long? = 1234567890L          // Fixed seed for reproducibility
-)
-```
-
-### `CodecPropertyTestConfig`
-
-```kotlin
-data class CodecPropertyTestConfig(
-    val iterations: Int = 1000  // Number of property test iterations
-)
-```
-
-## Testing Nested Structures
+### Nested types
 
 ```kotlin
 data class Company(
@@ -356,112 +226,110 @@ test("test company golden codec") {
 }
 ```
 
-## Golden Files in Version Control
+## Working with golden files
 
-**Important:** Commit your golden files to version control!
+Golden files live under `src/test/resources/golden/` by default, one per sample: `Person_000.json`, `Person_001.json` and so on.
 
-```bash
-git add src/test/resources/golden/
-git commit -m "Add golden test files for Person"
+### First run
+
+With no golden files yet, the test writes `_new` files and fails:
+
+```
+Golden file does not exist: Person_000.json
+
+A new reference file has been created: Person_000_new.json
+
+To accept this as the golden reference:
+  mv src/test/resources/golden/Person_000_new.json src/test/resources/golden/Person_000.json
+
+Then re-run the test.
 ```
 
-Benefits:
-- **Code review**: Reviewers can see serialization changes in PRs
-- **History**: Track how your format evolves over time
-- **CI**: Ensures tests pass in CI with the same reference files
+Look over the generated files, then accept them all:
 
-## FAQ
+```bash
+for f in src/test/resources/golden/*_new.json; do
+    mv "$f" "${f/_new.json/.json}"
+done
+```
 
-**Q: How many samples should I generate?**
-A: Start with 5. Increase to 10-20 if you have optional fields or complex variations.
+The next run passes.
 
-**Q: Can I use this with both JUnit and Kotest?**
-A: Yes! Kotest is recommended but JUnit 5 works with the `runTest` wrapper from `kotlinx-coroutines-test`.
+### When a type changes
 
-**Q: Do I need to commit `_new` and `_changed` files?**
-A: No! Only commit the final `.json` files. The `_new` and `_changed` files are temporary.
+If the output no longer matches, for example after adding a field, the test writes a `_changed` file next to the golden one and fails. Diff the two:
 
-**Q: Which module should I use?**
-A:
-- `golden-jackson` for Jackson JSON
-- `golden-kotlinx-json` for kotlinx.serialization JSON
+```bash
+diff src/test/resources/golden/Person_000.json src/test/resources/golden/Person_000_changed.json
+```
 
-**Q: Can I add support for other formats?**
-A: Yes! The `golden-core` module provides format-agnostic file management. Create a new module following the pattern of existing modules.
+If the change is what you wanted, copy it over the golden file:
 
-## Comparison with Other Approaches
+```bash
+cp src/test/resources/golden/Person_000_changed.json src/test/resources/golden/Person_000.json
+```
 
-| Approach | Manual JSON | Snapshot Testing | Golden Testing (this lib) |
-|----------|-------------|------------------|---------------------------|
-| Explicit review | ❌ No | ⚠️ Sometimes | ✅ Always |
-| Multiple variations | ❌ Hard | ⚠️ Manual | ✅ Automatic (property testing) |
-| Backward compat | ❌ Not tested | ❌ Not tested | ✅ Tested (decoding law) |
-| Round-trip testing | ❌ Not tested | ❌ Not tested | ✅ Tested (round-trip law) |
-| Clear workflow | ⚠️ Manual | ⚠️ Auto-update | ✅ `_new`/`_changed` workflow |
+If it isn't, fix the code.
+
+### Version control
+
+Commit the golden `.json` files. Don't commit the `_new` or `_changed` files; they only exist until you accept or reject them.
+
+## Configuration
+
+```kotlin
+data class GoldenCodecTestConfig(
+    val sampleCount: Int = 5,              // Number of golden samples
+    val resourcePath: String = "golden",   // Directory under src/test/resources/
+    val testRoundTrip: Boolean = true,     // Test round-trip stability
+    val testEncoding: Boolean = true,      // Test encoding
+    val testDecoding: Boolean = true,      // Test decoding
+    val seed: Long? = 1234567890L          // Fixed seed so samples are reproducible
+)
+
+data class CodecPropertyTestConfig(
+    val iterations: Int = 1000             // Number of property test iterations
+)
+```
+
+Five samples is a reasonable start. Types with many optional fields or variants may need 10 to 20.
+
+## Other formats
+
+`golden-core` handles the files and knows nothing about JSON. A new format is a new module that follows the pattern of `golden-jackson` and `golden-kotlinx-json`.
 
 ## Publishing
 
-### For Library Maintainers
+Versions come from git tags via the [axion-release-plugin](https://github.com/allegro/axion-release-plugin). A tagged commit gets that version (`1.0.6`); commits after a tag get a snapshot (`1.0.7-SNAPSHOT`).
 
-This project uses **automatic versioning** from git tags via the [axion-release-plugin](https://github.com/allegro/axion-release-plugin).
+Pushing a `v*` tag runs the GitHub Actions workflow, which builds, signs and publishes to Maven Central:
 
-**How Versioning Works:**
-- Version is automatically derived from the latest git tag
-- If current commit is tagged: release version (e.g., `1.0.2`)
-- If there are commits after the tag: SNAPSHOT version (e.g., `1.0.3-SNAPSHOT`)
+```bash
+git tag v1.0.7
+git push origin v1.0.7
+```
 
-**Setup (One-Time):**
+The workflow needs these repository secrets: `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `GPG_PRIVATE_KEY` (ASCII-armored) and `GPG_PASSPHRASE`.
 
-1. Register at [Sonatype Central Portal](https://central.sonatype.com/)
-2. Verify namespace ownership: `io.github.matthewjones372` (linked to your GitHub account)
-3. Generate GPG key pair for signing:
-   ```bash
-   gpg --full-generate-key
-   gpg --list-secret-keys --keyid-format=long
-   gpg --armor --export-secret-keys YOUR_KEY_ID
-   ```
-4. Configure credentials in `~/.gradle/gradle.properties`:
-   ```properties
-   mavenCentralUsername=your-sonatype-username
-   mavenCentralPassword=your-sonatype-password
-   signingInMemoryKey=<your-gpg-private-key-ascii-armored>
-   signingInMemoryKeyPassword=your-gpg-passphrase
-   ```
+To publish from a local machine, put the same values in `~/.gradle/gradle.properties`:
 
-**Local Publishing:**
+```properties
+mavenCentralUsername=your-sonatype-username
+mavenCentralPassword=your-sonatype-password
+signingInMemoryKey=<your-gpg-private-key-ascii-armored>
+signingInMemoryKeyPassword=your-gpg-passphrase
+```
+
+and run:
 
 ```bash
 ./gradlew publishAllPublicationsToMavenCentralRepository
 ```
 
-**Automated Publishing (Recommended):**
-
-Simply push a git tag with `v*` pattern to trigger automatic publishing to Maven Central:
-
-```bash
-git tag v1.0.3
-git push origin v1.0.3
-```
-
-GitHub Actions will automatically:
-1. Detect the version from the tag (e.g., `v1.0.3` → version `1.0.3`)
-2. Build and sign all artifacts
-3. Publish to Maven Central
-
-**Required GitHub Secrets:**
-- `MAVEN_CENTRAL_USERNAME`
-- `MAVEN_CENTRAL_PASSWORD`
-- `GPG_PRIVATE_KEY` (ASCII-armored)
-- `GPG_PASSPHRASE`
-
 ## License
 
-MIT License
+MIT
 
 ## Credits
 
-Inspired by:
-- [zio-json-golden](https://github.com/zio/zio-json/tree/series/2.x/zio-json-golden)
-- [circe-golden](https://github.com/circe/circe-golden)
-
-**Built with ❤️ using [Claude Code](https://claude.com/claude-code)**
+Based on [zio-json-golden](https://github.com/zio/zio-json/tree/series/2.x/zio-json-golden) and [circe-golden](https://github.com/circe/circe-golden).
