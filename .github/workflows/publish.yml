@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*'
+      # A pre-release tag is not a release: candidates go out as snapshots,
+      # through snapshot.yml, rather than to Central for good.
+      - '!v*-*'
 
 jobs:
   publish:

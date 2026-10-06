@@ -1,8 +1,8 @@
 plugins {
-    kotlin("jvm") version "2.0.21" apply false
-    kotlin("plugin.serialization") version "2.0.21" apply false
+    kotlin("jvm") version "2.2.21" apply false
+    kotlin("plugin.serialization") version "2.2.21" apply false
     id("pl.allegro.tech.build.axion-release") version "1.21.1"
-    id("com.vanniktech.maven.publish") version "0.30.0" apply false
+    id("com.vanniktech.maven.publish") version "0.37.0" apply false
 }
 
 val scmVer = scmVersion.version
@@ -58,9 +58,6 @@ subprojects {
     }
 
     configure<com.vanniktech.maven.publish.MavenPublishBaseExtension> {
-        publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
-        signAllPublications()
-
         pom {
             name.set(project.name)
             description.set("Kotlin golden testing library for ${project.name}")
