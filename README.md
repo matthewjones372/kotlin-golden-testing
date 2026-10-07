@@ -2,8 +2,16 @@
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.matthewjones372/golden-core)](https://central.sonatype.com/artifact/io.github.matthewjones372/golden-core)
 [![GitHub release](https://img.shields.io/github/v/release/matthewjones372/kotlin-golden-testing)](https://github.com/matthewjones372/kotlin-golden-testing/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 Golden testing and property-based testing for JSON codecs in Kotlin, based on [zio-json-golden](https://github.com/zio/zio-json/tree/series/2.x/zio-json-golden). It works with Jackson and kotlinx.serialization, and uses Kotest generators.
+
+This library checks how your own types are serialized. If you want to know
+whether a change to an HTTP API would break its callers, that is a different
+question, and [Pelican](https://github.com/matthewjones372/pelican)'s
+`pelican-test-golden` answers it: it keeps one golden file per endpoint and
+fails only when a change would break someone already calling the service
+([its guide](https://github.com/matthewjones372/pelican/blob/main/docs/golden-testing.md)).
 
 ## Modules
 
