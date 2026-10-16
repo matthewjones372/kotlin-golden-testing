@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-mattjones372
 
     steps:
     - name: Checkout code
