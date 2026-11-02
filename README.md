@@ -8,10 +8,10 @@ Golden testing and property-based testing for JSON codecs in Kotlin, based on [z
 
 This library checks how your own types are serialized. If you want to know
 whether a change to an HTTP API would break its callers, that is a different
-question, and [Pelican](https://github.com/matthewjones372/pelican)'s
+question, and [Pelican](https://github.com/surefold/pelican)'s
 `pelican-test-golden` answers it: it keeps one golden file per endpoint and
 fails only when a change would break someone already calling the service
-([its guide](https://github.com/matthewjones372/pelican/blob/main/docs/golden-testing.md)).
+([its guide](https://github.com/surefold/pelican/blob/main/docs/golden-testing.md)).
 
 ## Modules
 
